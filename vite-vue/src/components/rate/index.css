@@ -1,0 +1,17 @@
+.mio-rate {
+    display: flex;
+}
+
+.mio-rate-item {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: gray;
+}
+
+.mio-rate-item.is-active {
+    color: orange;
+}
