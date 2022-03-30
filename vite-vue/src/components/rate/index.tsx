@@ -1,11 +1,19 @@
-import { defineComponent, ref, Ref, watch } from 'vue';
+import {
+  defineComponent,
+  getCurrentInstance,
+  ref,
+  Ref,
+  UnwrapRef,
+  watch,
+} from 'vue';
 import { renderIcon } from './icon';
 import './index.css';
 
 const getNumberList = (num: number) => {
   return Array.from({ length: num }).map((_, i) => i + 1);
 };
-function useRateClasses({
+
+const useRateClasses = ({
   currentValue,
   currentOverValue,
   index,
@@ -13,12 +21,31 @@ function useRateClasses({
   currentValue: Ref<number>;
   currentOverValue: Ref<number>;
   index: number;
-}) {
+}) => {
   return [
     'mio-rate-item',
     (currentOverValue.value || currentValue.value) >= index ? 'is-active' : '',
   ];
-}
+};
+
+const useVModel = <T extends { modelValue: T['modelValue'] }>(props: T) => {
+  const { emit } = getCurrentInstance();
+
+  const proxy = ref(props.modelValue);
+
+  watch(proxy, (value) => {
+    emit('update:modelValue', value);
+  });
+
+  watch(
+    () => props.modelValue,
+    (value) => {
+      proxy.value = value as UnwrapRef<T['modelValue']>;
+    },
+  );
+
+  return proxy;
+};
 
 export default defineComponent({
   name: 'Rate',
@@ -29,23 +56,11 @@ export default defineComponent({
     },
   },
 
-  setup(props, { emit }) {
-    const currentValue = ref(props.modelValue);
-
-    watch(currentValue, (value) => {
-      emit('update:modelValue', value);
-    });
-
-    watch(
-      () => props.modelValue,
-      (value) => {
-        currentValue.value = value;
-      },
-    );
+  setup(props) {
+    const currentValue = useVModel(props);
+    const onClickItem = (index: number) => (currentValue.value = index);
 
     const currentOverValue = ref(0);
-
-    const onClickItem = (index: number) => (currentValue.value = index);
 
     const renderRateItem = (index: number) => (
       <div
@@ -57,6 +72,7 @@ export default defineComponent({
         {renderIcon()}
       </div>
     );
+
     const renderRate = () => (
       <div class='mio-rate'>
         {getNumberList(5).map((i) => renderRateItem(i))}
